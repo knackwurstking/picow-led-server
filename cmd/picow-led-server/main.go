@@ -8,8 +8,10 @@ import (
 
 	"github.com/MatusOllah/slogcolor"
 	"github.com/SuperPaintman/nice/cli"
+	"golang.org/x/net/websocket"
 
-	"github.com/knackwurstking/picow-led-server/internal/ws"
+	"github.com/knackwurstking/picow-led-server/internal/server"
+	"github.com/knackwurstking/picow-led-server/pkg/event"
 	"github.com/knackwurstking/picow-led-server/pkg/picow"
 	"github.com/knackwurstking/picow-led-server/ui"
 )
@@ -97,17 +99,16 @@ func runCommand(cmd *cli.Command) error {
 	http.Handle("GET /", http.FileServerFS(ui.Dist()))
 
 	// Init websocket handler
-	room := ws.NewRoom(api)
+	event := event.NewEvent[*picow.Api]()
+	server := server.NewServer(api, event)
 
 	if flags.config != "" {
-		room.OnApiChange = func(api *picow.Api) {
+		event.On("change", func(api *picow.Api) {
 			api.SaveToPath(flags.config)
-		}
+		})
 	}
 
-	http.Handle("GET /ws", room)
-
-	go room.Run()
+	http.Handle("GET /ws", websocket.Handler(server.HandleWS))
 
 	addr := fmt.Sprintf("%s:%d", flags.host, flags.port)
 	slog.Info("Started server", "address", addr)

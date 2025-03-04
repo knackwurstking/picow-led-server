@@ -31,6 +31,7 @@ const screenshots = [];
 const manifest = {
     strategies: "generateSW",
     registerType: "prompt",
+    includeAssets: ["/fonts/bootstrap-icons.woff", "/fonts/bootstrap-icons.woff2"],
     manifest: {
         name: "PicoW LED",
         short_name: "picow-led",

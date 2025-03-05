@@ -31,24 +31,27 @@ func (s *Server) HandleWS(ws *websocket.Conn) {
 	}()
 	defer ws.Close()
 
-	// TODO: Add websocket to connections and start the main event loop, just a channel waiting for
-	// event data
 	s.conns.add(ws)
+	s.readLoop(ws)
+}
 
+func (s *Server) readLoop(ws *websocket.Conn) {
 	var n int
 	var err error
 	var d []byte
 	b := make([]byte, 1024)
-outer:
+
+main:
 	for {
 		d = make([]byte, 0)
 
+	buffer:
 		for {
 			// ws.SetReadDeadline(time.Now().Add(time.Second * 5))
 			if n, err = ws.Read(b); err != nil || n == 0 {
 				if err == io.EOF {
 					slog.Debug("Got an end of file error")
-					break outer
+					break main
 				}
 
 				if err != nil {
@@ -59,14 +62,14 @@ outer:
 					slog.Debug("Got empty data from a client")
 				}
 
-				break
+				break buffer
 			} else {
 				slog.Debug("Add buffer to data", "size", n, "char", string(b[:n]))
 				d = append(d, b[:n]...)
 
 				if b[n-1] == '\n' {
 					slog.Debug("Detected a newline at the end")
-					break
+					break buffer
 				}
 			}
 		}

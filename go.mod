@@ -5,6 +5,7 @@ go 1.23
 require (
 	github.com/MatusOllah/slogcolor v1.3.0
 	github.com/SuperPaintman/nice v0.0.0-20211001214957-a29cd3367b17
+	github.com/lmittmann/tint v1.0.7
 	golang.org/x/net v0.35.0
 )
 

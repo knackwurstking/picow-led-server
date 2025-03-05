@@ -47,7 +47,12 @@ export class WS extends base.BaseWS {
             case "DELETE api.device":
             case "POST api.device.pins":
             case "POST api.device.color":
-                this.ws?.send(JSON.stringify(request));
+                const data = JSON.stringify(request);
+                if (!!data.match(/\n/)) {
+                    throw `Newline(s) in data not allowed, Try to escap it first`;
+                }
+
+                this.ws?.send(data + "\n");
                 break;
 
             default:

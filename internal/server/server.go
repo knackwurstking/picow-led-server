@@ -36,9 +36,12 @@ func (s *Server) HandleWS(ws *websocket.Conn) {
 }
 
 func (s *Server) readLoop(ws *websocket.Conn) {
-	var n int
-	var err error
-	var d []byte
+	var (
+		n   int
+		err error
+		d   []byte
+	)
+
 	b := make([]byte, 1024)
 
 main:

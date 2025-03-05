@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"log/slog"
+	"sync"
 
 	"golang.org/x/net/websocket"
 
@@ -15,18 +16,24 @@ import (
 type Server struct {
 	event            *event.Event[*picow.Api]
 	api              *picow.Api
-	conns            *connections
+	conns            *Connections
 	request          chan *Request
 	broadcastError   chan *ResponseError
 	broadcastDevice  chan *ResponseDevice
 	broadcastDevices chan *ResponseDevices
+	responseMutex    *sync.Mutex
 }
 
 func NewServer(a *picow.Api, e *event.Event[*picow.Api]) *Server {
 	return &Server{
-		event: e,
-		api:   a,
-		conns: newConnections(),
+		event:            e,
+		api:              a,
+		conns:            NewConnections(),
+		request:          make(chan *Request),
+		broadcastError:   make(chan *ResponseError),
+		broadcastDevice:  make(chan *ResponseDevice),
+		broadcastDevices: make(chan *ResponseDevices),
+		responseMutex:    &sync.Mutex{},
 	}
 }
 
@@ -36,13 +43,47 @@ func (s *Server) StartResponseHandler() {
 		case req := <-s.request:
 			func() {
 				// TODO: Handle requests here...
+				switch req.Command {
+				case CommandGetApiDevices:
+					respond(NewResponseDevices(s.api.Devices), req.Conn)
+
+				case CommandPostApiDevice:
+					// ...
+
+				case CommandPutApiDevice:
+					// ...
+
+				case CommandDeleteApiDevice:
+					// ...
+
+				case CommandPostApiDevicePins:
+					// ...
+
+				case CommandPostApiDeviceColor:
+					// ...
+				}
 			}()
+
 		case resp := <-s.broadcastError:
-			respond[*ResponseError](resp, s.conns)
+			func() {
+				defer s.responseMutex.Unlock()
+				s.responseMutex.Lock()
+				respond(resp, s.conns.list()...)
+			}()
+
 		case resp := <-s.broadcastDevice:
-			respond[*ResponseDevice](resp, s.conns)
+			func() {
+				defer s.responseMutex.Unlock()
+				s.responseMutex.Lock()
+				respond(resp, s.conns.list()...)
+			}()
+
 		case resp := <-s.broadcastDevices:
-			respond[*ResponseDevices](resp, s.conns)
+			func() {
+				defer s.responseMutex.Unlock()
+				s.responseMutex.Lock()
+				respond(resp, s.conns.list()...)
+			}()
 		}
 	}
 }
@@ -110,9 +151,9 @@ main:
 	}
 }
 
-func respond[T *ResponseError | *ResponseDevices | *ResponseDevice](data T, conns *connections) {
+func respond[T *ResponseError | *ResponseDevices | *ResponseDevice](data T, conns ...*websocket.Conn) {
 	if d, err := json.Marshal(data); err == nil {
-		for c := range conns.conns {
+		for _, c := range conns {
 			go func() {
 				if _, err := c.Write(d); err != nil {
 					slog.Debug("Writing failed", "addr", c.RemoteAddr(), "error", err)

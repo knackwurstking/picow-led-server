@@ -1,9 +1,13 @@
 package server
 
-import "github.com/knackwurstking/picow-led-server/pkg/picow"
+import (
+	"github.com/knackwurstking/picow-led-server/pkg/picow"
+	"golang.org/x/net/websocket"
+)
 
 type Request struct {
-	Command Command `json:"command"`
+	Conn    *websocket.Conn `json:"-"`
+	Command Command         `json:"command"`
 	// Data contains either an empty string or a json string from type `RequestData_*`
 	Data string `json:"data"`
 }

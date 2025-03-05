@@ -10,15 +10,15 @@ const (
 	ResponseTypeError   ResponseType = "error"
 )
 
-type Response[T string | []*picow.DeviceData | *picow.DeviceData] struct {
+type Response[T string | []*picow.Device | *picow.Device] struct {
 	Type ResponseType `json:"type"`
 	Data T            `json:"data"`
 }
 
 type (
 	ResponseError   = Response[string]
-	ResponseDevice  = Response[*picow.DeviceData]
-	ResponseDevices = Response[[]*picow.DeviceData]
+	ResponseDevice  = Response[*picow.Device]
+	ResponseDevices = Response[[]*picow.Device]
 )
 
 func NewResponseError(d string) *ResponseError {
@@ -28,14 +28,14 @@ func NewResponseError(d string) *ResponseError {
 	}
 }
 
-func NewResponseDevice(d *picow.DeviceData) *ResponseDevice {
+func NewResponseDevice(d *picow.Device) *ResponseDevice {
 	return &ResponseDevice{
 		Type: ResponseTypeDevice,
 		Data: d,
 	}
 }
 
-func NewResponseDevices(d []*picow.DeviceData) *ResponseDevices {
+func NewResponseDevices(d []*picow.Device) *ResponseDevices {
 	return &ResponseDevices{
 		Type: ResponseTypeDevices,
 		Data: d,

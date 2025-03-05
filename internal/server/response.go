@@ -1,5 +1,7 @@
 package server
 
+import "github.com/knackwurstking/picow-led-server/pkg/picow"
+
 const (
 	ResponseTypeDevices ResponseType = "devices"
 	ResponseTypeDevice  ResponseType = "device"
@@ -8,17 +10,23 @@ const (
 
 type ResponseType string
 
-type Response struct {
-	Data any          `json:"data"`
+type (
+	ResponseError   = Response[string]
+	ResponseDevice  = Response[*picow.Device]
+	ResponseDevices = Response[[]*picow.DeviceData]
+)
+
+type Response[T string | []*picow.DeviceData | *picow.Device] struct {
 	Type ResponseType `json:"type"`
+	Data any          `json:"data"`
 }
 
-func (r *Response) SetError(err error) {
+func (r *Response[T]) SetError(err error) {
 	r.Type = ResponseTypeError
 	r.Data = err.Error()
 }
 
-func (r *Response) SetData(t ResponseType, data any) {
+func (r *Response[T]) SetData(t ResponseType, data any) {
 	r.Type = t
 	r.Data = data
 }

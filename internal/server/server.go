@@ -13,11 +13,13 @@ import (
 )
 
 type Server struct {
-	event     *event.Event[*picow.Api]
-	api       *picow.Api
-	conns     *connections
-	request   chan *Request
-	broadcast chan *Response
+	event            *event.Event[*picow.Api]
+	api              *picow.Api
+	conns            *connections
+	request          chan *Request
+	broadcastError   chan *ResponseError
+	broadcastDevice  chan *ResponseDevice
+	broadcastDevices chan *ResponseDevices
 }
 
 func NewServer(a *picow.Api, e *event.Event[*picow.Api]) *Server {
@@ -35,10 +37,12 @@ func (s *Server) StartResponseHandler() {
 			func() {
 				// TODO: Handle requests here...
 			}()
-		case resp := <-s.broadcast:
-			func() {
-				// TODO: Handle responses/broadcasts here...
-			}()
+		case resp := <-s.broadcastError:
+			respond[*ResponseError](resp, s.conns)
+		case resp := <-s.broadcastDevice:
+			respond[*ResponseDevice](resp, s.conns)
+		case resp := <-s.broadcastDevices:
+			respond[*ResponseDevices](resp, s.conns)
 		}
 	}
 }
@@ -103,5 +107,19 @@ main:
 			// NOTE: Ignore any error for now
 			s.request <- r
 		}
+	}
+}
+
+func respond[T *ResponseError | *ResponseDevices | *ResponseDevice](data T, conns *connections) {
+	if d, err := json.Marshal(data); err == nil {
+		for c := range conns.conns {
+			go func() {
+				if _, err := c.Write(d); err != nil {
+					slog.Debug("Writing failed", "addr", c.RemoteAddr(), "error", err)
+				}
+			}()
+		}
+	} else {
+		slog.Error("Failed to marshal response", "error", err)
 	}
 }

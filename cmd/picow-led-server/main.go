@@ -1,15 +1,14 @@
 package main
 
-// TODO: Use tint for slog color
-
 import (
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 
-	"github.com/MatusOllah/slogcolor"
 	"github.com/SuperPaintman/nice/cli"
+	"github.com/lmittmann/tint"
 	"golang.org/x/net/websocket"
 
 	"github.com/knackwurstking/picow-led-server/internal/server"
@@ -18,7 +17,6 @@ import (
 	"github.com/knackwurstking/picow-led-server/ui"
 )
 
-// TODO: Get rid of this
 type Flags struct{}
 
 var flags = struct {
@@ -77,15 +75,20 @@ func main() {
 
 func runCommand(cmd *cli.Command) error {
 	// Initialize logger
+
+	tintOptions := &tint.Options{
+		AddSource:  true,
+		Level:      slog.LevelInfo,
+		TimeFormat: time.DateTime,
+	}
+
 	if flags.debug {
-		slogcolor.DefaultOptions.Level = slog.LevelDebug
+		tintOptions.Level = slog.LevelDebug
 	}
 
 	slog.SetDefault(
 		slog.New(
-			slogcolor.NewHandler(
-				os.Stderr, slogcolor.DefaultOptions,
-			),
+			tint.NewHandler(os.Stderr, tintOptions),
 		),
 	)
 

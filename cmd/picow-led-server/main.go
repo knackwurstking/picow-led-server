@@ -1,5 +1,7 @@
 package main
 
+// TODO: Use tint for slog color
+
 import (
 	"fmt"
 	"log/slog"
@@ -16,6 +18,7 @@ import (
 	"github.com/knackwurstking/picow-led-server/ui"
 )
 
+// TODO: Get rid of this
 type Flags struct{}
 
 var flags = struct {

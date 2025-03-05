@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"log/slog"
 
@@ -12,9 +13,11 @@ import (
 )
 
 type Server struct {
-	event *event.Event[*picow.Api]
-	api   *picow.Api
-	conns *connections
+	event     *event.Event[*picow.Api]
+	api       *picow.Api
+	conns     *connections
+	request   chan *Request
+	broadcast chan *Response
 }
 
 func NewServer(a *picow.Api, e *event.Event[*picow.Api]) *Server {
@@ -22,6 +25,21 @@ func NewServer(a *picow.Api, e *event.Event[*picow.Api]) *Server {
 		event: e,
 		api:   a,
 		conns: newConnections(),
+	}
+}
+
+func (s *Server) StartResponseHandler() {
+	for {
+		select {
+		case req := <-s.request:
+			func() {
+				// TODO: Handle requests here...
+			}()
+		case resp := <-s.broadcast:
+			func() {
+				// TODO: Handle responses/broadcasts here...
+			}()
+		}
 	}
 }
 
@@ -78,8 +96,12 @@ main:
 		}
 
 		d = bytes.TrimRight(d, "\n")
-
-		// TODO: Handle request, do somethings with data here
 		slog.Debug("Got some data from a client", "size", len(d), "data", string(d))
+
+		r := &Request{}
+		if json.Unmarshal(d, r) == nil {
+			// NOTE: Ignore any error for now
+			s.request <- r
+		}
 	}
 }

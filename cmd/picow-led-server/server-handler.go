@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 )
@@ -14,21 +15,21 @@ func (*serverHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	crw := &customResponseWriter{
+	rw := &ResponseWriter{
 		ResponseWriter: w,
 		Hijacker:       w.(http.Hijacker),
 	}
 
-	crw.Header().Set("Access-Control-Allow-Origin", "*")
-	http.DefaultServeMux.ServeHTTP(crw, r)
+	rw.Header().Set("Access-Control-Allow-Origin", "*")
+	http.DefaultServeMux.ServeHTTP(rw, r)
 
 	log := slog.Warn
 
-	if crw.status >= 200 && crw.status < 300 || crw.status == 0 {
+	if rw.StatusCode >= 200 && rw.StatusCode < 300 || rw.StatusCode == 0 {
 		log = slog.Info
-	} else if crw.status >= 500 {
+	} else if rw.StatusCode >= 500 {
 		log = slog.Error
 	}
 
-	log("Request", "status", crw.status, "addr", r.RemoteAddr, "method", r.Method, "url", r.URL)
+	log(fmt.Sprintf("%s %s", r.Method, r.URL.Path), "addr", r.RemoteAddr, "status", rw.StatusCode)
 }

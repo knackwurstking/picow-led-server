@@ -2,14 +2,21 @@ package main
 
 import "net/http"
 
-type customResponseWriter struct {
+type ResponseWriter struct {
 	http.ResponseWriter
 	http.Hijacker
 
-	status int
+	StatusCode int
 }
 
-func (crw *customResponseWriter) WriteHeader(statusCode int) {
-	crw.status = statusCode
-	crw.ResponseWriter.WriteHeader(statusCode)
+func NewResponseWriter(w http.ResponseWriter) *ResponseWriter {
+	return &ResponseWriter{
+		ResponseWriter: w,
+		Hijacker:       w.(http.Hijacker),
+	}
+}
+
+func (rw *ResponseWriter) WriteHeader(statusCode int) {
+	rw.StatusCode = statusCode
+	rw.ResponseWriter.WriteHeader(statusCode)
 }

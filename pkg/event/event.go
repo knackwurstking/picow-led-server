@@ -13,7 +13,9 @@ func NewEvent[T any]() *Event[T] {
 	return &Event[T]{}
 }
 
-func (e *Event[T]) Dispatch() {}
+func (e *Event[T]) Dispatch() {
+	// TODO: ...
+}
 
 func (e *Event[T]) On(n Name, l Listener[T]) *Listener[T] {
 	// TODO: ...

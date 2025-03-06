@@ -1,15 +1,15 @@
 clean:
-	@git clean -f -x -d
+	git clean -f -x -d
 
 init:
-	@cd ui && npm install && cd .. && go mod tidy -v
+	cd ui && npm install && cd .. && go mod tidy -v
 
 test:
-	@go test -v --race ./...
-	@which deadcode && deadcode ./...
+	go test -v --race ./...
+	which deadcode && deadcode ./...
 
 build:
-	@rm -rf dist && \
+	rm -rf dist && \
 		cd ui && \
 		npm run build && \
 		cd .. && \

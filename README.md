@@ -1,11 +1,18 @@
 # PicoW LED Server
 
+**TODO**: Short project description here
+
 <!--toc:start-->
 
 - [PicoW LED Server](#picow-led-server)
+  - [Getting Started](#getting-started)
   - [Notes](#notes)
 
 <!--toc:end-->
+
+## Getting Started
+
+**TODO**: Getting Started section here
 
 ## Notes
 
@@ -17,6 +24,8 @@
 | /ws      |  x  |      |     |        |
 
 **WebSocket Events**:
+
+**TODO**: TS types have changed
 
 | Type    | Data                             |
 | ------- | -------------------------------- |

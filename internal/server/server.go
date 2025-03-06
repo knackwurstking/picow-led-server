@@ -51,7 +51,7 @@ func (s *Server) StartResponseHandler() {
 			func() {
 				switch req.Command {
 				case CommandGetApiDevices:
-					Send(s, NewResponseDevices(s.api.Devices), req.Conn)
+					Send(NewResponseDevices(s.api.Devices), s.mutexResponse, req.Conn)
 
 				case CommandPostApiDevice:
 					func() {
@@ -61,20 +61,20 @@ func (s *Server) StartResponseHandler() {
 
 						deviceData := picow.DeviceData{}
 						if err := json.Unmarshal([]byte(req.Data), &deviceData); err != nil {
-							Send(s, NewResponseError(err.Error()), req.Conn)
+							Send(NewResponseError(err.Error()), s.mutexResponse, req.Conn)
 							return
 						}
 
 						for _, d := range s.api.Devices {
 							if d.Addr() == deviceData.Server.Addr {
 								Send(
-									s,
 									NewResponseError(
 										fmt.Sprintf(
 											"device already exists, use \"%s\" command",
 											CommandPutApiDevice,
 										),
 									),
+									s.mutexResponse,
 									req.Conn,
 								)
 								return
@@ -95,7 +95,7 @@ func (s *Server) StartResponseHandler() {
 
 						deviceData := picow.DeviceData{}
 						if err := json.Unmarshal([]byte(req.Data), &deviceData); err != nil {
-							Send(s, NewResponseError(err.Error()), req.Conn)
+							Send(NewResponseError(err.Error()), s.mutexResponse, req.Conn)
 							return
 						}
 
@@ -110,13 +110,13 @@ func (s *Server) StartResponseHandler() {
 
 						if device == nil {
 							Send(
-								s,
 								NewResponseError(
 									fmt.Sprintf(
 										"device does not exist, use \"%s\" command",
 										CommandPostApiDevice,
 									),
 								),
+								s.mutexResponse,
 								req.Conn,
 							)
 							return
@@ -140,13 +140,13 @@ func (s *Server) StartResponseHandler() {
 			}()
 
 		case resp := <-s.broadcastError:
-			Send(s, resp, s.conns.list()...)
+			Send(resp, s.mutexResponse, s.conns.list()...)
 
 		case resp := <-s.broadcastDevice:
-			Send(s, resp, s.conns.list()...)
+			Send(resp, s.mutexResponse, s.conns.list()...)
 
 		case resp := <-s.broadcastDevices:
-			Send(s, resp, s.conns.list()...)
+			Send(resp, s.mutexResponse, s.conns.list()...)
 		}
 	}
 }
@@ -214,9 +214,9 @@ main:
 	}
 }
 
-func Send[T *ResponseError | *ResponseDevices | *ResponseDevice](s *Server, data T, conns ...*websocket.Conn) {
-	defer s.responseMutex.Unlock()
-	s.responseMutex.Lock()
+func Send[T *ResponseError | *ResponseDevices | *ResponseDevice](data T, m *sync.Mutex, conns ...*websocket.Conn) {
+	defer m.Unlock()
+	m.Lock()
 
 	wg := &sync.WaitGroup{}
 

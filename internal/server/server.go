@@ -3,9 +3,11 @@ package server
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"sync"
+	"time"
 
 	"golang.org/x/net/websocket"
 
@@ -14,14 +16,18 @@ import (
 )
 
 type Server struct {
-	event            *event.Event[*picow.Api]
-	api              *picow.Api
-	conns            *Connections
-	request          chan *Request
+	event *event.Event[*picow.Api]
+	api   *picow.Api
+	conns *Connections
+
+	request chan *Request
+
 	broadcastError   chan *ResponseError
 	broadcastDevice  chan *ResponseDevice
 	broadcastDevices chan *ResponseDevices
-	responseMutex    *sync.Mutex
+
+	mutexResponse   *sync.Mutex
+	mutexApiDevices *sync.Mutex
 }
 
 func NewServer(a *picow.Api, e *event.Event[*picow.Api]) *Server {
@@ -33,7 +39,8 @@ func NewServer(a *picow.Api, e *event.Event[*picow.Api]) *Server {
 		broadcastError:   make(chan *ResponseError),
 		broadcastDevice:  make(chan *ResponseDevice),
 		broadcastDevices: make(chan *ResponseDevices),
-		responseMutex:    &sync.Mutex{},
+		mutexResponse:    &sync.Mutex{},
+		mutexApiDevices:  &sync.Mutex{},
 	}
 }
 
@@ -42,48 +49,69 @@ func (s *Server) StartResponseHandler() {
 		select {
 		case req := <-s.request:
 			func() {
-				// TODO: Handle requests here...
 				switch req.Command {
 				case CommandGetApiDevices:
-					respond(NewResponseDevices(s.api.Devices), req.Conn)
+					Send(s, NewResponseDevices(s.api.Devices), req.Conn)
 
 				case CommandPostApiDevice:
-					// ...
+					func() {
+						if req.Data == "" {
+							return
+						}
+
+						deviceData := picow.DeviceData{}
+						if err := json.Unmarshal([]byte(req.Data), &deviceData); err != nil {
+							Send(s, NewResponseError(err.Error()), req.Conn)
+							return
+						}
+
+						// Checks
+						for _, d := range s.api.Devices {
+							if d.Addr() == deviceData.Server.Addr {
+								Send(
+									s,
+									NewResponseError(
+										fmt.Sprintf(
+											"device already exists, use \"%s\" command",
+											CommandPutApiDevice,
+										),
+									),
+									req.Conn,
+								)
+								return
+							}
+						}
+
+						// Do stuff here
+						s.api.Devices.Add(picow.NewDevice(deviceData), s.mutexApiDevices)
+
+						// Handle response/broadcast
+						s.broadcastDevices <- NewResponseDevices(s.api.Devices)
+						go s.event.Dispatch()
+					}()
 
 				case CommandPutApiDevice:
-					// ...
+					// TODO: ...
 
 				case CommandDeleteApiDevice:
-					// ...
+					// TODO: ...
 
 				case CommandPostApiDevicePins:
-					// ...
+					// TODO: ...
 
 				case CommandPostApiDeviceColor:
-					// ...
+					// TODO: ...
 				}
 			}()
 
 		case resp := <-s.broadcastError:
-			func() {
-				defer s.responseMutex.Unlock()
-				s.responseMutex.Lock()
-				respond(resp, s.conns.list()...)
-			}()
+			Send(s, resp, s.conns.list()...)
 
 		case resp := <-s.broadcastDevice:
-			func() {
-				defer s.responseMutex.Unlock()
-				s.responseMutex.Lock()
-				respond(resp, s.conns.list()...)
-			}()
+			Send(s, resp, s.conns.list()...)
 
 		case resp := <-s.broadcastDevices:
-			func() {
-				defer s.responseMutex.Unlock()
-				s.responseMutex.Lock()
-				respond(resp, s.conns.list()...)
-			}()
+			Send(s, resp, s.conns.list()...)
 		}
 	}
 }
@@ -151,15 +179,27 @@ main:
 	}
 }
 
-func respond[T *ResponseError | *ResponseDevices | *ResponseDevice](data T, conns ...*websocket.Conn) {
+func Send[T *ResponseError | *ResponseDevices | *ResponseDevice](s *Server, data T, conns ...*websocket.Conn) {
+	defer s.responseMutex.Unlock()
+	s.responseMutex.Lock()
+
+	wg := &sync.WaitGroup{}
+
 	if d, err := json.Marshal(data); err == nil {
 		for _, c := range conns {
+			wg.Add(1)
+
 			go func() {
+				defer wg.Done()
+
+				c.SetWriteDeadline(time.Now().Add(time.Second * 5))
 				if _, err := c.Write(d); err != nil {
 					slog.Debug("Writing failed", "addr", c.RemoteAddr(), "error", err)
 				}
 			}()
 		}
+
+		wg.Wait()
 	} else {
 		slog.Error("Failed to marshal response", "error", err)
 	}

@@ -15,10 +15,7 @@ func (*serverHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	rw := &ResponseWriter{
-		ResponseWriter: w,
-		Hijacker:       w.(http.Hijacker),
-	}
+	rw := NewResponseWriter(w)
 
 	rw.Header().Set("Access-Control-Allow-Origin", "*")
 	http.DefaultServeMux.ServeHTTP(rw, r)

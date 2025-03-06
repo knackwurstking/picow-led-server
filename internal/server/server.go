@@ -165,10 +165,107 @@ func (s *Server) StartResponseHandler() {
 					}()
 
 				case CommandPostApiDevicePins:
-					// TODO: ...
+					func() {
+						if req.Data == "" {
+							return
+						}
+
+						reqData := &RequestData_PostApiDevicePins{}
+						if err := json.Unmarshal([]byte(req.Data), &reqData); err != nil {
+							Send(NewResponseError(err), s.mutexResponse, req.Conn)
+							return
+						}
+
+						// Checks
+						if reqData.Pins == nil {
+							Send(
+								NewResponseError(fmt.Errorf("pins missing for %s", reqData.Addr)),
+								s.mutexResponse,
+								req.Conn,
+							)
+							return
+						}
+
+						var device *picow.Device
+
+						for _, d := range s.api.Devices {
+							if d.Addr() != reqData.Addr {
+								continue
+							}
+
+							device = d
+
+							if err := d.SetPins(reqData.Pins); err != nil {
+								Send(NewResponseError(err), s.mutexResponse, req.Conn)
+							}
+						}
+
+						// Handle response/broadcast
+						if device == nil {
+							Send(
+								NewResponseError(
+									fmt.Errorf("device %s not found", reqData.Addr),
+								),
+								s.mutexResponse,
+								req.Conn,
+							)
+							return
+						}
+
+						s.broadcastDevice <- NewResponseDevice(device)
+						s.event.Dispatch(EventNameChange, s.api)
+					}()
 
 				case CommandPostApiDeviceColor:
-					// TODO: ...
+					func() {
+						if req.Data == "" {
+							return
+						}
+
+						reqData := RequestData_PostApiDeviceColor{}
+						if err := json.Unmarshal([]byte(req.Data), &reqData); err != nil {
+							Send(NewResponseError(err), s.mutexResponse, req.Conn)
+							return
+						}
+
+						// Checks
+						if reqData.Color == nil {
+							Send(
+								NewResponseError(fmt.Errorf("color missing for %s", reqData.Addr)),
+								s.mutexResponse,
+								req.Conn,
+							)
+							return
+						}
+
+						var device *picow.Device
+
+						// Do stuff here
+						for _, d := range s.api.Devices {
+							if d.Addr() != reqData.Addr {
+								continue
+							}
+
+							device = d
+
+							if err := d.SetColor(reqData.Color); err != nil {
+								Send(NewResponseError(err), s.mutexResponse, req.Conn)
+							}
+						}
+
+						if device == nil {
+							Send(
+								NewResponseError(
+									fmt.Errorf("device %s not found", reqData.Addr),
+								),
+								s.mutexResponse,
+								req.Conn,
+							)
+							return
+						}
+
+						s.broadcastDevice <- NewResponseDevice(device)
+					}()
 				}
 			}()
 

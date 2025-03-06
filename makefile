@@ -1,15 +1,16 @@
 clean:
 	@git clean -f -x -d
 
+init:
+	@cd ui && npm install && cd .. && go mod tidy -v
+
 test:
 	@go test -v --race ./...
 	@which deadcode && deadcode ./...
 
 build:
 	@rm -rf dist && \
-		go mod tidy -v && \
 		cd ui && \
-		npm install && \
 		npm run build && \
 		cd .. && \
 		go build -v --race -o dist/picow-led-server ./cmd/picow-led-server

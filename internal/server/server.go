@@ -239,7 +239,7 @@ main:
 		d = bytes.TrimRight(d, "\n")
 		slog.Debug("Got some data from a client", "size", len(d), "data", string(d))
 
-		r := &Request{}
+		r := &Request{Conn: ws}
 		if json.Unmarshal(d, r) == nil {
 			// NOTE: Ignore any error for now
 			s.request <- r
@@ -251,6 +251,7 @@ func Send[T *ResponseError | *ResponseDevices | *ResponseDevice](data T, m *sync
 	defer m.Unlock()
 	m.Lock()
 
+	slog.Debug("Sending data to clients", "data", data, "conns", conns)
 	wg := &sync.WaitGroup{}
 
 	if d, err := json.Marshal(data); err == nil {
@@ -260,6 +261,7 @@ func Send[T *ResponseError | *ResponseDevices | *ResponseDevice](data T, m *sync
 			go func() {
 				defer wg.Done()
 
+				slog.Debug("Writing data to a client", "data", string(d), "addr", c.RemoteAddr())
 				c.SetWriteDeadline(time.Now().Add(time.Second * 5))
 				if _, err := c.Write(d); err != nil {
 					slog.Debug("Writing failed", "addr", c.RemoteAddr(), "error", err)

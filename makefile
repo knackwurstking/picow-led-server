@@ -1,6 +1,10 @@
 clean:
 	@git clean -f -x -d
 
+test:
+	@go test -v --race ./...
+	@which deadcode && deadcode ./...
+
 build:
 	@rm -rf dist && \
 		go mod tidy -v && \

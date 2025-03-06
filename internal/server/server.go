@@ -55,10 +55,10 @@ func (s *Server) StartResponseHandler() {
 			func() {
 				switch req.Command {
 				case CommandGetApiDevices:
-					Send(NewResponseDevices(s.api.Devices), s.mutexResponse, req.Conn)
+					go Send(NewResponseDevices(s.api.Devices), s.mutexResponse, req.Conn)
 
 				case CommandPostApiDevice:
-					func() {
+					go func() {
 						if req.Data == "" {
 							return
 						}
@@ -92,7 +92,7 @@ func (s *Server) StartResponseHandler() {
 					}()
 
 				case CommandPutApiDevice:
-					func() {
+					go func() {
 						if req.Data == "" {
 							return
 						}
@@ -133,7 +133,7 @@ func (s *Server) StartResponseHandler() {
 					}()
 
 				case CommandDeleteApiDevice:
-					func() {
+					go func() {
 						if req.Data == "" {
 							return
 						}
@@ -165,7 +165,7 @@ func (s *Server) StartResponseHandler() {
 					}()
 
 				case CommandPostApiDevicePins:
-					func() {
+					go func() {
 						if req.Data == "" {
 							return
 						}
@@ -217,7 +217,7 @@ func (s *Server) StartResponseHandler() {
 					}()
 
 				case CommandPostApiDeviceColor:
-					func() {
+					go func() {
 						if req.Data == "" {
 							return
 						}
@@ -270,21 +270,19 @@ func (s *Server) StartResponseHandler() {
 			}()
 
 		case resp := <-s.broadcastError:
-			Send(resp, s.mutexResponse, s.conns.list()...)
+			go Send(resp, s.mutexResponse, s.conns.list()...)
 
 		case resp := <-s.broadcastDevice:
-			Send(resp, s.mutexResponse, s.conns.list()...)
+			go Send(resp, s.mutexResponse, s.conns.list()...)
 
 		case resp := <-s.broadcastDevices:
-			Send(resp, s.mutexResponse, s.conns.list()...)
+			go Send(resp, s.mutexResponse, s.conns.list()...)
 		}
 	}
 }
 
 func (s *Server) HandleWS(ws *websocket.Conn) {
-	defer func() {
-		s.conns.remove(ws)
-	}()
+	defer s.conns.remove(ws)
 	defer ws.Close()
 
 	s.conns.add(ws)

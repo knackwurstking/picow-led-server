@@ -5,9 +5,9 @@
 <!--toc:start-->
 
 - [PicoW LED Server](#picow-led-server)
-    - [Getting Started](#getting-started)
-    - [Notes](#notes)
-        - [TS Types](#ts-types)
+  - [Getting Started](#getting-started)
+  - [Notes](#notes)
+    - [TS Types](#ts-types)
 
 <!--toc:end-->
 

@@ -15,6 +15,10 @@ import (
 	"github.com/knackwurstking/picow-led-server/pkg/picow"
 )
 
+const (
+	EventNameChange = "change"
+)
+
 type Server struct {
 	event *event.Event[*picow.Api]
 	api   *picow.Api
@@ -59,17 +63,17 @@ func (s *Server) StartResponseHandler() {
 							return
 						}
 
-						deviceData := picow.DeviceData{}
-						if err := json.Unmarshal([]byte(req.Data), &deviceData); err != nil {
-							Send(NewResponseError(err.Error()), s.mutexResponse, req.Conn)
+						reqData := RequestData_PostApiDevice{}
+						if err := json.Unmarshal([]byte(req.Data), &reqData); err != nil {
+							Send(NewResponseError(err), s.mutexResponse, req.Conn)
 							return
 						}
 
 						for _, d := range s.api.Devices {
-							if d.Addr() == deviceData.Server.Addr {
+							if d.Addr() == reqData.Server.Addr {
 								Send(
 									NewResponseError(
-										fmt.Sprintf(
+										fmt.Errorf(
 											"device already exists, use \"%s\" command",
 											CommandPutApiDevice,
 										),
@@ -81,10 +85,10 @@ func (s *Server) StartResponseHandler() {
 							}
 						}
 
-						s.api.Devices.Add(picow.NewDevice(deviceData), s.mutexApiDevices)
+						s.api.Devices.Add(picow.NewDevice(reqData.DeviceData), s.mutexApiDevices)
 
 						s.broadcastDevices <- NewResponseDevices(s.api.Devices)
-						go s.event.Dispatch()
+						go s.event.Dispatch(EventNameChange, s.api)
 					}()
 
 				case CommandPutApiDevice:
@@ -93,16 +97,16 @@ func (s *Server) StartResponseHandler() {
 							return
 						}
 
-						deviceData := picow.DeviceData{}
-						if err := json.Unmarshal([]byte(req.Data), &deviceData); err != nil {
-							Send(NewResponseError(err.Error()), s.mutexResponse, req.Conn)
+						reqData := RequestData_PutApiDevice{}
+						if err := json.Unmarshal([]byte(req.Data), &reqData); err != nil {
+							Send(NewResponseError(err), s.mutexResponse, req.Conn)
 							return
 						}
 
 						var device *picow.Device
 
 						for _, d := range s.api.Devices {
-							if d.Addr() == deviceData.Server.Addr {
+							if d.Addr() == reqData.Server.Addr {
 								device = d
 								break
 							}
@@ -111,7 +115,7 @@ func (s *Server) StartResponseHandler() {
 						if device == nil {
 							Send(
 								NewResponseError(
-									fmt.Sprintf(
+									fmt.Errorf(
 										"device does not exist, use \"%s\" command",
 										CommandPostApiDevice,
 									),
@@ -122,14 +126,43 @@ func (s *Server) StartResponseHandler() {
 							return
 						}
 
-						device.SetDeviceData(deviceData, s.mutexApiDevices)
+						device.SetDeviceData(reqData.DeviceData, s.mutexApiDevices)
 
 						s.broadcastDevice <- NewResponseDevice(device)
-						s.event.Dispatch()
+						s.event.Dispatch(EventNameChange, s.api)
 					}()
 
 				case CommandDeleteApiDevice:
-					// TODO: ...
+					func() {
+						if req.Data == "" {
+							return
+						}
+
+						reqData := RequestData_DeleteApiDevice{}
+						if err := json.Unmarshal([]byte(req.Data), &reqData); err != nil {
+							Send(NewResponseError(err), s.mutexResponse, req.Conn)
+							return
+						}
+
+						var device *picow.Device
+						for _, d := range s.api.Devices {
+							if d.Addr() == reqData.Addr {
+								device = d
+								break
+							}
+						}
+						if device == nil {
+							return // No such device, just return without any error
+						}
+
+						if ok := s.api.Devices.Remove(device, s.mutexApiDevices); !ok {
+							// Nothing to delete it seems
+							return
+						}
+
+						s.broadcastDevices <- NewResponseDevices(s.api.Devices)
+						s.event.Dispatch(EventNameChange, s.api)
+					}()
 
 				case CommandPostApiDevicePins:
 					// TODO: ...

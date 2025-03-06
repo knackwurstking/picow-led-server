@@ -29,12 +29,12 @@ as brightness, color, and patterns across different connected Pico W devices.
 <!--toc:start-->
 
 - [Getting Started](#getting-started)
-  - [System Requirements](#system-requirements)
-  - [Installation](#installation)
-  - [Configuration](#configuration)
-  - [Usage](#usage)
+    - [System Requirements](#system-requirements)
+    - [Installation](#installation)
+    - [Configuration](#configuration)
+    - [Usage](#usage)
 - [Notes](#notes)
-  - [TS Types](#ts-types)
+    - [TS Types](#ts-types)
 
 <!--toc:end-->
 
@@ -49,48 +49,48 @@ as brightness, color, and patterns across different connected Pico W devices.
 
 1. Clone this repository:
 
-   ```bash
-   git clone https://github.com/knackwurstking/picow-led-server.git
-   cd picow-led-server
-   ```
+    ```bash
+    git clone https://github.com/knackwurstking/picow-led-server.git
+    cd picow-led-server
+    ```
 
 2. Install dependencies:
 
-   ```bash
-   make init
-   ```
+    ```bash
+    make init
+    ```
 
 3. Have a look in the makefile and edit the first line to match your configuration location
 
-   ```makefile
-   CONFIG_LOCATION=.api.dev.json
-   ```
+    ```makefile
+    CONFIG_LOCATION=.api.dev.json
+    ```
 
 4. Edit the `picow-led-server.service` file to match your configuration location if you want
    to run it as a systemd user service
 
-   ```
-   [Service]
-   ExecStart=picow-led-server -d -c %h/.config/picow-led-server/api.json
-   ```
+    ```
+    [Service]
+    ExecStart=picow-led-server -d -c %h/.config/picow-led-server/api.json
+    ```
 
 5. Build the executable with, the executable will be located int the `dist` folder
 
-   ```bash
-   make build
-   ```
+    ```bash
+    make build
+    ```
 
 6. Or start the backend development server
 
-   ```bash
-   make dev
-   ```
+    ```bash
+    make dev
+    ```
 
 7. And start the frontend development server
 
-   ```bash
-   cd ui && npm run dev
-   ```
+    ```bash
+    cd ui && npm run dev
+    ```
 
 8. See also: [picow-led-microcontroller](https://github.com/knackwurstking/picow-led-microcontroller)
 
@@ -100,57 +100,57 @@ Create a `config.json` file in the root directory or wherever you want:
 
 ```json
 {
- "devices": [
-  {
-   "server": {
-    "name": "Kitchen",
-    "addr": "192.168.178.58:3000",
-    "online": true
-   },
-   "pins": [0, 1, 2, 3]
-  },
-  {
-   "server": {
-    "name": "Living Room",
-    "addr": "192.168.178.50:3000",
-    "online": true
-   },
-   "pins": [0, 1, 2, 3]
-  },
-  {
-   "server": {
-    "name": "PC Room",
-    "addr": "192.168.178.68:3000",
-    "online": true
-   },
-   "pins": [0, 1, 2, 3]
-  },
-  {
-   "server": {
-    "name": "Bath Room",
-    "addr": "192.168.178.62:3000",
-    "online": true
-   },
-   "pins": [0, 1, 2, 3]
-  },
+    "devices": [
+        {
+            "server": {
+                "name": "Kitchen",
+                "addr": "192.168.178.58:3000",
+                "online": true
+            },
+            "pins": [0, 1, 2, 3]
+        },
+        {
+            "server": {
+                "name": "Living Room",
+                "addr": "192.168.178.50:3000",
+                "online": true
+            },
+            "pins": [0, 1, 2, 3]
+        },
+        {
+            "server": {
+                "name": "PC Room",
+                "addr": "192.168.178.68:3000",
+                "online": true
+            },
+            "pins": [0, 1, 2, 3]
+        },
+        {
+            "server": {
+                "name": "Bath Room",
+                "addr": "192.168.178.62:3000",
+                "online": true
+            },
+            "pins": [0, 1, 2, 3]
+        },
 
-  {
-   "server": {
-    "name": "Work Room",
-    "addr": "192.168.178.54:3000",
-    "online": true
-   },
-   "pins": [0, 1, 3, 3]
-  },
-  {
-   "server": {
-    "name": "Sleep Room",
-    "addr": "192.168.178.67:3000",
-    "online": true
-   },
-   "pins": [0, 1, 2, 3]
-  }
- ]
+        {
+            "server": {
+                "name": "Work Room",
+                "addr": "192.168.178.54:3000",
+                "online": true
+            },
+            "pins": [0, 1, 3, 3]
+        },
+        {
+            "server": {
+                "name": "Sleep Room",
+                "addr": "192.168.178.67:3000",
+                "online": true
+            },
+            "pins": [0, 1, 2, 3]
+        }
+    ]
 }
 ```
 
@@ -194,42 +194,42 @@ _[ui/src/lib/ws/types.ts](ui/src/lib/ws/types.ts)_
 
 ```typescript
 export interface WSDeviceServer {
- name?: string;
- addr: string;
- online?: boolean;
+    name?: string;
+    addr: string;
+    online?: boolean;
 }
 
 export interface WSDevice {
- server: WSDeviceServer;
- pins?: number[];
- color?: number[];
+    server: WSDeviceServer;
+    pins?: number[];
+    color?: number[];
 }
 
 export type WSCommand = {
- "GET api.devices": null;
- "POST api.device": WSDevice;
- "PUT api.device": WSDevice;
- "DELETE api.device": { addr: string };
- "POST api.device.pins": { addr: string; pins: number[] };
- "POST api.device.color": { addr: string; color: number[] };
+    "GET api.devices": null;
+    "POST api.device": WSDevice;
+    "PUT api.device": WSDevice;
+    "DELETE api.device": { addr: string };
+    "POST api.device.pins": { addr: string; pins: number[] };
+    "POST api.device.color": { addr: string; color: number[] };
 };
 
 export interface WSRequest {
- command: string;
- data?: string; // JSON string
+    command: string;
+    data?: string; // JSON string
 }
 
 export type WSResponse =
- | {
-    data: string;
-    type: "error";
-   }
- | {
-    data: WSDevice[];
-    type: "devices";
-   }
- | {
-    data: WSDevice;
-    type: "device";
-   };
+    | {
+          data: string;
+          type: "error";
+      }
+    | {
+          data: WSDevice[];
+          type: "devices";
+      }
+    | {
+          data: WSDevice;
+          type: "device";
+      };
 ```

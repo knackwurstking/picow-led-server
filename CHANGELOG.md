@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v0.10.0 [unreleased]
+
+**Changed**:
+
+- Replaced gorilla with [golang.org/x/net/websocket]
+
 ## v0.9.2 [2025-02-25]
 
 **Misc**:

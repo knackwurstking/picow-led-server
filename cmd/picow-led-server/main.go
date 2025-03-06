@@ -116,6 +116,8 @@ func runCommand(cmd *cli.Command) error {
 
 	http.Handle("GET /ws", websocket.Handler(server.HandleWS))
 
+	go server.StartResponseHandler()
+
 	addr := fmt.Sprintf("%s:%d", flags.host, flags.port)
 	slog.Info("Started server", "address", addr)
 	return http.ListenAndServe(addr, &serverHandler{})

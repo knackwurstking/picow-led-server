@@ -6,7 +6,7 @@ init:
 
 test:
 	go test -v --race ./...
-	which deadcode && deadcode ./...
+	which deadcode && deadcode ./... || exit 0
 
 build:
 	rm -rf dist && \

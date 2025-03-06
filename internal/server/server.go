@@ -65,7 +65,6 @@ func (s *Server) StartResponseHandler() {
 							return
 						}
 
-						// Checks
 						for _, d := range s.api.Devices {
 							if d.Addr() == deviceData.Server.Addr {
 								Send(
@@ -82,16 +81,52 @@ func (s *Server) StartResponseHandler() {
 							}
 						}
 
-						// Do stuff here
 						s.api.Devices.Add(picow.NewDevice(deviceData), s.mutexApiDevices)
 
-						// Handle response/broadcast
 						s.broadcastDevices <- NewResponseDevices(s.api.Devices)
 						go s.event.Dispatch()
 					}()
 
 				case CommandPutApiDevice:
-					// TODO: ...
+					func() {
+						if req.Data == "" {
+							return
+						}
+
+						deviceData := picow.DeviceData{}
+						if err := json.Unmarshal([]byte(req.Data), &deviceData); err != nil {
+							Send(s, NewResponseError(err.Error()), req.Conn)
+							return
+						}
+
+						var device *picow.Device
+
+						for _, d := range s.api.Devices {
+							if d.Addr() == deviceData.Server.Addr {
+								device = d
+								break
+							}
+						}
+
+						if device == nil {
+							Send(
+								s,
+								NewResponseError(
+									fmt.Sprintf(
+										"device does not exist, use \"%s\" command",
+										CommandPostApiDevice,
+									),
+								),
+								req.Conn,
+							)
+							return
+						}
+
+						device.SetDeviceData(deviceData, s.mutexApiDevices)
+
+						s.broadcastDevice <- NewResponseDevice(device)
+						s.event.Dispatch()
+					}()
 
 				case CommandDeleteApiDevice:
 					// TODO: ...

@@ -33,7 +33,10 @@ func (c *Connections) remove(ws *websocket.Conn) {
 }
 
 func (c *Connections) list() []*websocket.Conn {
-	connections := make([]*websocket.Conn, len(c.conns))
+	defer c.mutex.Unlock()
+	c.mutex.Lock()
+
+	connections := make([]*websocket.Conn, 0)
 	for conn := range c.conns {
 		connections = append(connections, conn)
 	}

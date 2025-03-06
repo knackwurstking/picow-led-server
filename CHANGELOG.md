@@ -5,6 +5,7 @@
 **Changed**:
 
 - Replaced gorilla with [golang.org/x/net/websocket]
+- Update ui dependency to v2.1.0
 
 ## v0.9.2 [2025-02-25]
 

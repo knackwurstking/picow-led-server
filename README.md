@@ -29,14 +29,136 @@ as brightness, color, and patterns across different connected Pico W devices.
 <!--toc:start-->
 
 - [Getting Started](#getting-started)
+  - [System Requirements](#system-requirements)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+  - [Usage](#usage)
 - [Notes](#notes)
-- [TS Types](#ts-types)
+  - [TS Types](#ts-types)
 
 <!--toc:end-->
 
 ## Getting Started
 
-**TODO**: Getting Started section here
+### System Requirements
+
+- Node.js v18+ (Not sure about this, I'm on version v23.9.0)
+- Golang v1.24+
+
+### Installation
+
+1. Clone this repository:
+
+   ```bash
+   git clone https://github.com/knackwurstking/picow-led-server.git
+   cd picow-led-server
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   make init
+   ```
+
+3. Have a look in the makefile and edit the first line to match your configuration location
+
+   ```makefile
+   CONFIG_LOCATION=.api.dev.json
+   ```
+
+4. Edit the `picow-led-server.service` file to match your configuration location if you want
+   to run it as a systemd user service
+
+   ```
+   [Service]
+   ExecStart=picow-led-server -d -c %h/.config/picow-led-server/api.json
+   ```
+
+5. Build the executable with, the executable will be located int the `dist` folder
+
+   ```bash
+   make build
+   ```
+
+6. Or start the backend development server
+
+   ```bash
+   make dev
+   ```
+
+7. And start the frontend development server
+
+   ```bash
+   cd ui && npm run dev
+   ```
+
+8. See also: [picow-led-microcontroller](https://github.com/knackwurstking/picow-led-microcontroller)
+
+### Configuration
+
+Create a `config.json` file in the root directory or wherever you want:
+
+```json
+{
+ "devices": [
+  {
+   "server": {
+    "name": "Kitchen",
+    "addr": "192.168.178.58:3000",
+    "online": true
+   },
+   "pins": [0, 1, 2, 3]
+  },
+  {
+   "server": {
+    "name": "Living Room",
+    "addr": "192.168.178.50:3000",
+    "online": true
+   },
+   "pins": [0, 1, 2, 3]
+  },
+  {
+   "server": {
+    "name": "PC Room",
+    "addr": "192.168.178.68:3000",
+    "online": true
+   },
+   "pins": [0, 1, 2, 3]
+  },
+  {
+   "server": {
+    "name": "Bath Room",
+    "addr": "192.168.178.62:3000",
+    "online": true
+   },
+   "pins": [0, 1, 2, 3]
+  },
+
+  {
+   "server": {
+    "name": "Work Room",
+    "addr": "192.168.178.54:3000",
+    "online": true
+   },
+   "pins": [0, 1, 3, 3]
+  },
+  {
+   "server": {
+    "name": "Sleep Room",
+    "addr": "192.168.178.67:3000",
+    "online": true
+   },
+   "pins": [0, 1, 2, 3]
+  }
+ ]
+}
+```
+
+Add this to the command line `-c <config-path>`
+
+### Usage
+
+1. Access the web interface at `http://localhost:50833` or if frontend dev server is running `http://localhost:5173`
 
 ## Notes
 

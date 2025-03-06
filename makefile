@@ -13,7 +13,7 @@ build:
 		cd ui && \
 		npm run build && \
 		cd .. && \
-		go test= -v --race ./... && \
+		go test -v --race ./... && \
 		go build -v --race -o dist/picow-led-server ./cmd/picow-led-server
 
 dev:

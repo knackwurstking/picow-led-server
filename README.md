@@ -5,8 +5,9 @@
 <!--toc:start-->
 
 - [PicoW LED Server](#picow-led-server)
-  - [Getting Started](#getting-started)
-  - [Notes](#notes)
+    - [Getting Started](#getting-started)
+    - [Notes](#notes)
+        - [TS Types](#ts-types)
 
 <!--toc:end-->
 
@@ -25,41 +26,65 @@
 
 **WebSocket Events**:
 
-**TODO**: TS types have changed
-
-| Type    | Data                             |
-| ------- | -------------------------------- |
-| error   | `string`                         |
-| devices | [`WSEvents_Device[]`](#ts-types) |
-| device  | [`WSEvents_Device`](#ts-types)   |
+| Type    | Data                      |
+| ------- | ------------------------- |
+| error   | `string`                  |
+| devices | [`WSDevice[]`](#ts-types) |
+| device  | [`WSDevice`](#ts-types)   |
 
 **WebSocket Commands**:
 
 | Command               | Data                                |
 | --------------------- | ----------------------------------- |
 | GET api.devices       | `null`                              |
-| POST api.device       | [`WSEvents_Device`](#ts-types)      |
-| PUT api.device        | [`WSEvents_Device`](#ts-types)      |
+| POST api.device       | [`WSDevice`](#ts-types)             |
+| PUT api.device        | [`WSDevice`](#ts-types)             |
 | DELETE api.device     | `{ addr: string }`                  |
 | POST api.device.pins  | `{ addr: string; pins: number[] }`  |
 | POST api.device.color | `{ addr: string; color: number[] }` |
 
-<a id="ts-types"></a>
+### TS Types
 
-**TS Types**:
-
-_[frontend/src/lib/websocket/types.ts](frontend/src/lib/websocket/types.ts)_
+_[ui/src/lib/ws/types.ts](ui/src/lib/ws/types.ts)_
 
 ```typescript
-export interface WSEvents_Device {
-    server: WSEvents_DeviceServer;
-    pins?: number[];
-    color?: number[];
-}
-
-export interface WSEvents_DeviceServer {
+export interface WSDeviceServer {
     name?: string;
     addr: string;
     online?: boolean;
 }
+
+export interface WSDevice {
+    server: WSDeviceServer;
+    pins?: number[];
+    color?: number[];
+}
+
+export type WSCommand = {
+    "GET api.devices": null;
+    "POST api.device": WSDevice;
+    "PUT api.device": WSDevice;
+    "DELETE api.device": { addr: string };
+    "POST api.device.pins": { addr: string; pins: number[] };
+    "POST api.device.color": { addr: string; color: number[] };
+};
+
+export interface WSRequest {
+    command: string;
+    data?: string; // JSON string
+}
+
+export type WSResponse =
+    | {
+          data: string;
+          type: "error";
+      }
+    | {
+          data: WSDevice[];
+          type: "devices";
+      }
+    | {
+          data: WSDevice;
+          type: "device";
+      };
 ```

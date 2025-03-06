@@ -10,7 +10,7 @@ build:
 		npm run build && \
 		cd .. && \
 		go test -v --race ./... && \
-		go build -v --race -o dist/picow-led-server ./cmd/picow-led-server
+		go build -v -o dist/picow-led-server ./cmd/picow-led-server
 
 test:
 	go test -v --race ./...
@@ -18,5 +18,5 @@ test:
 
 dev:
 	#DEBUG=nodemon:*,nodemon nodemon -L --signal SIGTERM --exec 'go run ./cmd/picow-led-server -d -c .api.dev.json' --ext '' --delay 3
-	nodemon -L --signal SIGTERM --exec 'go run -v --race ./cmd/picow-led-server -d -c .api.dev.json' --ext 'go,mod,sum' --delay 3 --ignore ./ui
+	nodemon -L --signal SIGTERM --exec 'go run -v ./cmd/picow-led-server -d -c .api.dev.json' --ext 'go,mod,sum' --delay 3 --ignore ./ui
 

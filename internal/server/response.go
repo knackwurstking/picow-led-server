@@ -21,10 +21,10 @@ type (
 	ResponseDevices = Response[[]*picow.Device]
 )
 
-func NewResponseError(d string) *ResponseError {
+func NewResponseError(e error) *ResponseError {
 	return &ResponseError{
 		Type: ResponseTypeError,
-		Data: d,
+		Data: e.Error(),
 	}
 }
 
